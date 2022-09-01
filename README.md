@@ -30,4 +30,5 @@ The implementation is built and tested with VS2019 and CUDA 11.7
 * Open the project with VS2019
 * Build in Release mode
 * Go to directory ./profile and run default_run.py inside this directory
+
 The script should give a sample run of a toy cessna plane. You can modify the parameters used in the script
