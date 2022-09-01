@@ -844,8 +844,8 @@ void pathtrace(uchar4* pbo, int frame, int iter) {
 		
 		
 		cudaEventRecord(kdTree_start);
-		//kdTreeIntersectionSingleRay << <numblocksPathSegmentTracing, blockSize1d >> > (dev_treeNodes, num_paths, dev_geoms, 6, dev_paths, dev_tris, dev_intersections, -1);
-		kdTreeIntersectionNaive << <numblocksPathSegmentTracing, blockSize1d >> > (dev_treeNodes, num_paths, dev_geoms, 6, dev_paths, dev_tris, hst_scene->kdTree->tris.size(), dev_intersections, -1);
+		kdTreeIntersectionSingleRay << <numblocksPathSegmentTracing, blockSize1d >> > (dev_treeNodes, num_paths, dev_geoms, 6, dev_paths, dev_tris, dev_intersections, -1);
+		//kdTreeIntersectionNaive << <numblocksPathSegmentTracing, blockSize1d >> > (dev_treeNodes, num_paths, dev_geoms, 6, dev_paths, dev_tris, hst_scene->kdTree->tris.size(), dev_intersections, -1);
 		cudaEventRecord(kdTree_stop);
 		//kdTreeIntersection << <numblocksAABB, blockSize1d >> > (dev_treeNodes, num_paths_aabb, dev_geoms, 6, dev_paths, dev_tris, dev_intersections, -1);
 		checkCUDAError("kd kernel");

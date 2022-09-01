@@ -183,7 +183,7 @@ bool init() {
 }
 
 void mainLoop() {
-    while (!glfwWindowShouldClose(window) && iteration < 100) {
+    while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
         runCuda();
         string title = "CIS565 Path Tracer | " + utilityCore::convertIntToString(iteration) + " Iterations";
