@@ -62,3 +62,20 @@ plt.legend(loc="upper left")
 plt.xlabel("number of triangles")
 plt.ylabel("kernel time (ms)")
 plt.savefig("naive_kdtree")
+
+plt.clf()
+ax1 = plt.gca()
+ax2 = ax1.twinx()
+bounds = [10, 20, 50, 100, 150, 200, 300]
+array = []
+for item in par_data:
+    if item[0] == 10000:
+        array.append(item)
+
+array = np.array(array)
+ax1.plot(bounds, array[:, 4], 'b')
+ax2.plot(bounds, array[:, 2]/1000000, 'r')
+ax1.set_ylabel("kernel time (ms)", color="blue")
+ax2.set_ylabel("construction time (ms)", color="red")
+ax1.set_xlabel("bound size")
+plt.savefig("bound")
