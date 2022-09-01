@@ -58,7 +58,7 @@ struct KdTreeNode {
 class KdTree {
 	
 	void readTriData(std::string filename, std::vector<Triangle>& tri_data);
-	void setTreeGeom();
+	void setTreeGeom(std::string filename);
 	void constructTree(std::vector<Triangle>& triDataArray);
 	void connectRopes();
 	void connectRopeRec(int nodeIdx, int neighbor_node_indices[6]);

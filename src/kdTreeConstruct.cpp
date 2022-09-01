@@ -13,7 +13,7 @@ KdTree::KdTree(std::string filename, int bound) {
 	readTriData(filename, tri_data);
 	constructTree(tri_data);
 	connectRopes();
-	setTreeGeom();
+	setTreeGeom(filename);
 }
 
 KdTree::~KdTree() {}
@@ -73,59 +73,74 @@ void KdTree::readTriData(std::string filename, std::vector<Triangle>& tri_data) 
 	Profiler::getInstance().getFs() << tri_data.size() << " " << this->bound << " ";
 }
 
-void KdTree::setTreeGeom() {
+void KdTree::setTreeGeom(std::string filename) {
 	//hard code geom info
-	//gourd 648
-	/*geom.type = OBJECT;
-	geom.materialid = 5;
-	geom.translation.x = 0.0f;
-	geom.translation.y = 4.5f;
-	geom.translation.z = 4.0f;
-	geom.rotation.x = 0.0f;
-	geom.rotation.y = 0.0f;
-	geom.rotation.z = 0.0f;
-	geom.scale.x = 1.6f;
-	geom.scale.y = 1.6f;
-	geom.scale.z = 1.6f;*/
+	if (filename == "./objects/gourd.obj") {
+		//gourd 648
+		geom.type = OBJECT;
+		geom.materialid = 5;
+		geom.translation.x = 0.0f;
+		geom.translation.y = 4.5f;
+		geom.translation.z = 4.0f;
+		geom.rotation.x = 0.0f;
+		geom.rotation.y = 0.0f;
+		geom.rotation.z = 0.0f;
+		geom.scale.x = 1.6f;
+		geom.scale.y = 1.6f;
+		geom.scale.z = 1.6f;
+	}
+	
 
-	//violin 2112
-	/*geom.type = OBJECT;
-	geom.materialid = 5;
-	geom.translation.x = 0.0f;
-	geom.translation.y = 4.5f;
-	geom.translation.z = 4.0f;
-	geom.rotation.x = 0.0f;
-	geom.rotation.y = 30.0f;
-	geom.rotation.z = 80.0f;
-	geom.scale.x = 1.6f;
-	geom.scale.y = 1.6f;
-	geom.scale.z = 1.6f;*/
+	else if (filename == "./objects/violin.obj") {
+		//violin 2112
+		geom.type = OBJECT;
+		geom.materialid = 5;
+		geom.translation.x = 0.0f;
+		geom.translation.y = 4.5f;
+		geom.translation.z = 4.0f;
+		geom.rotation.x = 0.0f;
+		geom.rotation.y = 30.0f;
+		geom.rotation.z = 80.0f;
+		geom.scale.x = 1.6f;
+		geom.scale.y = 1.6f;
+		geom.scale.z = 1.6f;
+	}
 
-	//pumpkin 10000
-	geom.type = OBJECT;
-	geom.materialid = 5;
-	geom.translation.x = 0.0f;
-	geom.translation.y = 4.5f;
-	geom.translation.z = 6.0f;
-	geom.rotation.x = 0.0f;
-	geom.rotation.y = 0.0f;
-	geom.rotation.z = 0.0f;
-	geom.scale.x = 0.05f;
-	geom.scale.y = 0.05f;
-	geom.scale.z = 0.05f;
+	else if (filename == "./objects/pumpkin.obj") {
+		//pumpkin 10000
+		geom.type = OBJECT;
+		geom.materialid = 5;
+		geom.translation.x = 0.0f;
+		geom.translation.y = 4.5f;
+		geom.translation.z = 6.0f;
+		geom.rotation.x = 0.0f;
+		geom.rotation.y = 0.0f;
+		geom.rotation.z = 0.0f;
+		geom.scale.x = 0.05f;
+		geom.scale.y = 0.05f;
+		geom.scale.z = 0.05f;
+	}
+	
+	else if (filename == "./objects/cessna.obj") {
+		//cessna 7446
+		geom.type = OBJECT;
+		geom.materialid = 5;
+		geom.translation.x = 0.0f;
+		geom.translation.y = 4.5f;
+		geom.translation.z = 2.0f;
+		geom.rotation.x = 30.0f;
+		geom.rotation.y = 30.0f;
+		geom.rotation.z = 0.0f;
+		geom.scale.x = 0.2f;
+		geom.scale.y = 0.2f;
+		geom.scale.z = 0.2f;
+	}
 
-	//cessna 7446
-	/*geom.type = OBJECT;
-	geom.materialid = 5;
-	geom.translation.x = 0.0f;
-	geom.translation.y = 4.5f;
-	geom.translation.z = 2.0f;
-	geom.rotation.x = 30.0f;
-	geom.rotation.y = 30.0f;
-	geom.rotation.z = 0.0f;
-	geom.scale.x = 0.2f;
-	geom.scale.y = 0.2f;
-	geom.scale.z = 0.2f;*/
+	else {
+		std::cout << "Geometry information not set for object!\n";
+		exit(-1);
+	}
+	
 
 	geom.transform = utilityCore::buildTransformationMatrix(
 		geom.translation, geom.rotation, geom.scale);
