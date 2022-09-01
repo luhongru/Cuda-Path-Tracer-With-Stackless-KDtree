@@ -3,10 +3,12 @@
 #include "tiny_obj_loader.h"
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtx/string_cast.hpp>
+#include "profile.h"
 
-constexpr int TRI_COUNT_UPPER_BOUND = 20;
 
-KdTree::KdTree(std::string filename) {
+
+KdTree::KdTree(std::string filename, int bound) {
+	this->bound = bound;
 	std::vector<Triangle> tri_data;
 	readTriData(filename, tri_data);
 	constructTree(tri_data);
@@ -60,24 +62,71 @@ void KdTree::readTriData(std::string filename, std::vector<Triangle>& tri_data) 
 			glm::vec3 edge2 = tri.v[2] - tri.v[0];
 			tri.normal = glm::normalize(glm::cross(edge1, edge2));
 			tri_data.push_back(tri);
+			if (tri_data.size() == Profiler::getInstance().triCount) {
+				Profiler::getInstance().getFs() << tri_data.size() << " " << this->bound << " ";
+				return;
+			}
 			index_offset += fv;
 		}
 	}
+
+	Profiler::getInstance().getFs() << tri_data.size() << " " << this->bound << " ";
 }
 
 void KdTree::setTreeGeom() {
 	//hard code geom info
-	geom.type = OBJECT;
+	//gourd 648
+	/*geom.type = OBJECT;
 	geom.materialid = 5;
 	geom.translation.x = 0.0f;
 	geom.translation.y = 4.5f;
 	geom.translation.z = 4.0f;
 	geom.rotation.x = 0.0f;
-	geom.rotation.y = 40.0f;
-	geom.rotation.z = 70.0f;
+	geom.rotation.y = 0.0f;
+	geom.rotation.z = 0.0f;
 	geom.scale.x = 1.6f;
 	geom.scale.y = 1.6f;
-	geom.scale.z = 1.6f;
+	geom.scale.z = 1.6f;*/
+
+	//violin 2112
+	/*geom.type = OBJECT;
+	geom.materialid = 5;
+	geom.translation.x = 0.0f;
+	geom.translation.y = 4.5f;
+	geom.translation.z = 4.0f;
+	geom.rotation.x = 0.0f;
+	geom.rotation.y = 30.0f;
+	geom.rotation.z = 80.0f;
+	geom.scale.x = 1.6f;
+	geom.scale.y = 1.6f;
+	geom.scale.z = 1.6f;*/
+
+	//pumpkin 10000
+	geom.type = OBJECT;
+	geom.materialid = 5;
+	geom.translation.x = 0.0f;
+	geom.translation.y = 4.5f;
+	geom.translation.z = 6.0f;
+	geom.rotation.x = 0.0f;
+	geom.rotation.y = 0.0f;
+	geom.rotation.z = 0.0f;
+	geom.scale.x = 0.05f;
+	geom.scale.y = 0.05f;
+	geom.scale.z = 0.05f;
+
+	//cessna 7446
+	/*geom.type = OBJECT;
+	geom.materialid = 5;
+	geom.translation.x = 0.0f;
+	geom.translation.y = 4.5f;
+	geom.translation.z = 2.0f;
+	geom.rotation.x = 30.0f;
+	geom.rotation.y = 30.0f;
+	geom.rotation.z = 0.0f;
+	geom.scale.x = 0.2f;
+	geom.scale.y = 0.2f;
+	geom.scale.z = 0.2f;*/
+
 	geom.transform = utilityCore::buildTransformationMatrix(
 		geom.translation, geom.rotation, geom.scale);
 	geom.inverseTransform = glm::inverse(geom.transform);
@@ -212,17 +261,8 @@ void KdTree::constructTree(std::vector<Triangle> &tri_data_array) {
 	for (int i = 0; i < treeNodes.size(); i++) {
 		auto& node = treeNodes[i];
 		auto& tri_idx_array = tri_idx_array_of_nodes[i];
-		if (!node.isLeaf || tri_idx_array.size() <= TRI_COUNT_UPPER_BOUND)
+		if (!node.isLeaf || tri_idx_array.size() <= this->bound)
 			continue;
-
-		//tree structure
-		node.isLeaf = false;
-		node.leftNodeIdx = treeNodes.size();
-		node.rightNodeIdx = treeNodes.size() + 1;
-
-		//triangle array
-		node.triStartIdx = -1;
-		node.triCount = 0;
 
 		//bounding box
 		setSplitPlane(node);
@@ -245,6 +285,47 @@ void KdTree::constructTree(std::vector<Triangle> &tri_data_array) {
 			if (rightOfSplitPlane(node, tri))
 				rightNode_tri_idx_array.push_back(idx);
 		}
+		/*int xyz = 0;
+		while (leftNode_tri_idx_array.size() == tri_idx_array.size() || rightNode_tri_idx_array.size() == tri_idx_array.size()) {
+			//std::cout << tri_idx_array.size() << std::endl;
+			if (xyz == 3)
+				break;
+			if (node.split_plane_axis == Z_AXIS) {
+				node.split_plane_axis = X_AXIS;
+				node.split_plane_value = (node.bb.max.x + node.bb.min.x) / 2;
+			}
+
+			if (node.split_plane_axis == X_AXIS) {
+				node.split_plane_axis = Y_AXIS;
+				node.split_plane_value = (node.bb.max.y + node.bb.min.y) / 2;
+			}
+
+			if (node.split_plane_axis == Y_AXIS) {
+				node.split_plane_axis = Z_AXIS;
+				node.split_plane_value = (node.bb.max.z + node.bb.min.z) / 2;
+			}
+
+			leftNode_tri_idx_array.clear();
+			rightNode_tri_idx_array.clear();
+			for (auto idx : tri_idx_array) {
+				auto tri = tri_data_array[idx];
+				if (leftOfSplitPlane(node, tri))
+					leftNode_tri_idx_array.push_back(idx);
+				if (rightOfSplitPlane(node, tri))
+					rightNode_tri_idx_array.push_back(idx);
+			}
+			xyz++;
+		}*/
+			
+
+		//tree structure
+		node.isLeaf = false;
+		node.leftNodeIdx = treeNodes.size();
+		node.rightNodeIdx = treeNodes.size() + 1;
+
+		//triangle array
+		node.triStartIdx = -1;
+		node.triCount = 0;
 
 		leftNode.bb = getChildBoundingBox(node, true);
 		rightNode.bb = getChildBoundingBox(node, false);
@@ -265,7 +346,6 @@ void KdTree::constructTree(std::vector<Triangle> &tri_data_array) {
 		if (!node.isLeaf)
 			continue;
 
-		assert(tri_idx_array.size() <= TRI_COUNT_UPPER_BOUND);
 		node.triStartIdx = tris.size();
 		node.triCount = tri_idx_array.size();
 		for (auto idx : tri_idx_array)

@@ -19,8 +19,7 @@ private:
 public:
     Scene(std::string filename);
     ~Scene() {}
-
-    int loadObj(std::string filename);
+    int loadObj(std::string filename, int bound);
     std::vector<Geom> geoms;
     std::vector<Material> materials;
     RenderState state;

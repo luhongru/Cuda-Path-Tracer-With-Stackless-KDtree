@@ -76,6 +76,7 @@ set(headers
     src/kdTree.h
     src/kdTreeGPU.h
     src/tiny_obj_loader.h
+    src/profile.h
     )
 
 set(sources
@@ -88,6 +89,7 @@ set(sources
     src/preview.cpp
     src/utilities.cpp
     src/kdTreeConstruct.cpp
+    src/profile.cpp
     )
 
 list(SORT headers)

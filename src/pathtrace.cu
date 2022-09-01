@@ -17,6 +17,7 @@
 #include "intersections.h"
 #include "interactions.h"
 #include "kdTreeGPU.h"
+#include "profile.h"
 
 #define ERRORCHECK 1
 
@@ -699,7 +700,7 @@ __global__ void shadeMaterial(
 
 			// If the material indicates that the object was a light, "light" the ray
 			if (material.emittance > 0.0f) {
-				pathSegments[idx].color *= (materialColor * material.emittance * 0.5f);
+				pathSegments[idx].color *= (materialColor * material.emittance * 0.27f);
 				pathSegments[idx].remainingBounces--;
 			}
 			
@@ -756,7 +757,7 @@ struct is_aabb_inter {
  * of memory management
  */
 void pathtrace(uchar4* pbo, int frame, int iter) {
-	const int traceDepth = hst_scene->state.traceDepth;
+	const int traceDepth = 10;
 	const Camera& cam = hst_scene->state.camera;
 	const int pixelcount = cam.resolution.x * cam.resolution.y;
 
@@ -812,11 +813,18 @@ void pathtrace(uchar4* pbo, int frame, int iter) {
 
 	bool iterationComplete = false;
 	while (!iterationComplete) {
+		cudaEvent_t start, partition_stop, kdTree_start, kdTree_stop, stop;
+		cudaEventCreate(&start);
+		cudaEventCreate(&partition_stop);
+		cudaEventCreate(&kdTree_start);
+		cudaEventCreate(&kdTree_stop);
+		cudaEventCreate(&stop);
+		cudaEventRecord(start);
 		
 		PathSegment* new_end = thrust::partition(thrust::device, dev_paths, dev_paths + num_paths, is_complete());
 		num_paths = new_end - dev_paths;
 		if (num_paths < 1) break;
-	
+		cudaEventRecord(partition_stop);
 
 		// clean shading chunks
 		cudaMemset(dev_intersections, 0, pixelcount * sizeof(ShadeableIntersection));
@@ -832,29 +840,17 @@ void pathtrace(uchar4* pbo, int frame, int iter) {
 			, dev_intersections
 			);
 		checkCUDAError("trace one bounce");
-		
-		PathSegment* new_end_path = thrust::partition(thrust::device, dev_paths, dev_paths + num_paths, is_aabb_path());
-		thrust::partition(thrust::device, dev_intersections, dev_intersections + num_paths, is_aabb_inter());
-		int num_paths_aabb = new_end_path - dev_paths;
-		dim3 numblocksAABB = (num_paths_aabb + blockSize1d - 1) / blockSize1d;
-		/*
-		cudaMemcpy(hst_paths, dev_paths, pixelcount * sizeof(PathSegment), cudaMemcpyDeviceToHost);
-		cudaMemcpy(hst_intersections, dev_intersections, pixelcount * sizeof(ShadeableIntersection), cudaMemcpyDeviceToHost);
 
-		for (int i = 0; i < pixelcount; i++) {
-			kdTreeIntersectionSingleRayCPU(hst_scene->kdTree->treeNodes.data(), num_paths_aabb, &hst_scene->kdTree->geom, 0, hst_paths, hst_scene->kdTree->tris.data(), hst_intersections, -1, hst_scene, i);
-		}
-		//kdTreeIntersectionSingleRay << <numblocksAABB, blockSize1d >> > (dev_treeNodes, num_paths_aabb, dev_geoms, 6, dev_paths, dev_tris, dev_intersections, -1);
-
-		cudaMemcpy(dev_paths, hst_paths, pixelcount * sizeof(PathSegment), cudaMemcpyHostToDevice);
-		cudaMemcpy(dev_intersections, hst_intersections, pixelcount * sizeof(ShadeableIntersection), cudaMemcpyHostToDevice);*/
 		
-		kdTreeIntersectionSingleRay << <numblocksAABB, blockSize1d >> > (dev_treeNodes, num_paths_aabb, dev_geoms, 6, dev_paths, dev_tris, dev_intersections, -1);
+		
+		cudaEventRecord(kdTree_start);
+		//kdTreeIntersectionSingleRay << <numblocksPathSegmentTracing, blockSize1d >> > (dev_treeNodes, num_paths, dev_geoms, 6, dev_paths, dev_tris, dev_intersections, -1);
+		kdTreeIntersectionNaive << <numblocksPathSegmentTracing, blockSize1d >> > (dev_treeNodes, num_paths, dev_geoms, 6, dev_paths, dev_tris, hst_scene->kdTree->tris.size(), dev_intersections, -1);
+		cudaEventRecord(kdTree_stop);
 		//kdTreeIntersection << <numblocksAABB, blockSize1d >> > (dev_treeNodes, num_paths_aabb, dev_geoms, 6, dev_paths, dev_tris, dev_intersections, -1);
 		checkCUDAError("kd kernel");
 		cudaDeviceSynchronize();
 		depth++;
-		printf("compute intersection done\n");
 
 		// TODO:
 		// --- Shading Stage ---
@@ -877,12 +873,21 @@ void pathtrace(uchar4* pbo, int frame, int iter) {
 			dev_paths,
 			dev_materials
 			);
-		iterationComplete = depth == 5; // TODO: should be based off stream compaction results.
+		iterationComplete = depth == 10; // TODO: should be based off stream compaction results.
+		cudaEventRecord(stop);
+
+		cudaEventSynchronize(stop);
+
+		float partition_time, kdTree_time, time;
+		cudaEventElapsedTime(&partition_time, start, partition_stop);
+		cudaEventElapsedTime(&kdTree_time, kdTree_start, kdTree_stop);
+		cudaEventElapsedTime(&time, start, stop);
+		Profiler::getInstance().addTime(partition_time, kdTree_time, time);
 	}
 
 	// Assemble this iteration and apply it to the image
 	dim3 numBlocksPixels = (pixelcount + blockSize1d - 1) / blockSize1d;
-	finalGather << <numBlocksPixels, blockSize1d >> > (num_paths, dev_image, dev_paths);
+	finalGather << <numBlocksPixels, blockSize1d >> > (dev_path_end - dev_paths, dev_image, dev_paths);
 
 	///////////////////////////////////////////////////////////////////////////
 

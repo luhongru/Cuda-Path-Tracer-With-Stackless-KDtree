@@ -62,11 +62,12 @@ class KdTree {
 	void constructTree(std::vector<Triangle>& triDataArray);
 	void connectRopes();
 	void connectRopeRec(int nodeIdx, int neighbor_node_indices[6]);
+	int bound;
 public:
 	std::vector<Triangle> tris;
 	std::vector<KdTreeNode> treeNodes;
 	Geom geom;
 
-	KdTree(std::string filename);
+	KdTree(std::string filename, int bound);
 	~KdTree();
 };

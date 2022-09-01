@@ -1,6 +1,7 @@
 #include "main.h"
 #include "preview.h"
 #include <cstring>
+#include "profile.h"
 
 static std::string startTimeString;
 
@@ -38,11 +39,17 @@ int main(int argc, char** argv) {
     }
 
     const char *sceneFile = argv[1];
-
+    const char* boundStr = argv[2];
+    const char* objFile = argv[3];
+    const char* profileFile = argv[4];
+    const char* triStr = argv[5];
+    int bound = atoi(boundStr);
+    int triCount = atoi(triStr);
+    Profiler::getInstance().init(profileFile);
+    Profiler::getInstance().triCount = triCount;
     // Load scene file
     scene = new Scene(sceneFile);
-    scene->loadObj("./objects/violin.obj");
-
+    scene->loadObj(objFile, bound);
     // Set up camera stuff from loaded path tracer settings
     iteration = 0;
     renderState = &scene->state;

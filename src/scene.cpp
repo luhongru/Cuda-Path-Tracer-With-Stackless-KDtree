@@ -3,6 +3,8 @@
 #include <cstring>
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtx/string_cast.hpp>
+#include <chrono>
+#include "profile.h"
 #define TINYOBJLOADER_IMPLEMENTATION // define this in only *one* .cc
 // Optional. define TINYOBJLOADER_USE_MAPBOX_EARCUT gives robust trinagulation. Requires C++11
 //#define TINYOBJLOADER_USE_MAPBOX_EARCUT
@@ -36,8 +38,13 @@ Scene::Scene(string filename) {
     }
 }
 
-int Scene::loadObj(string inputfile) {
-    this->kdTree = new KdTree(inputfile);
+int Scene::loadObj(string inputfile, int bound) {
+    std::chrono::time_point<std::chrono::high_resolution_clock> start, end;
+    start = std::chrono::high_resolution_clock::now();
+    this->kdTree = new KdTree(inputfile, bound);
+    end = std::chrono::high_resolution_clock::now();
+    
+    Profiler::getInstance().getFs() << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() << " ";
     this->geoms.push_back(this->kdTree->geom);
     return 0;
 }
